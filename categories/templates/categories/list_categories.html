@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mt-4">
+    <h2 class="text-white">Categories</h2>
+
+    <!-- Filter Dropdown -->
+    <form method="GET" class="mb-3">
+        <label for="category_type" class="text-white">Filter by Category Type:</label>
+        <select name="category_type" id="category_type" class="form-select w-auto d-inline-block">
+            <option value="">All</option>
+            {% for category_type in category_types %}
+            <option value="{{ category_type }}" {% if request.GET.category_type == category_type %}selected{% endif %}>
+                {{ category_type }}
+            </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-info">Filter</button>
+    </form>
+
+    <!-- Add Category Button -->
+    <a class="btn btn-primary mb-3" href="{% url 'create_category' %}">
+        <i class="bi bi-plus-lg"></i> Add Category
+    </a>
+
+    <!-- Category List -->
+    {% if categories %}
+    <div class="table-responsive">
+        <table class="table table-dark table-hover">
+            <thead class="thead-light">
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Category Type</th>
+                    <th>Parent</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in categories %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ c.name }}</td>
+                    <td>{{ c.category_type }}</td>
+                    <td>{{ c.parent|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'update_category' c.id %}" class="btn btn-warning btn-sm">
+                            <i class="bi bi-pencil"></i> Update
+                        </a>
+                        <a href="{% url 'delete_category' c.id %}" class="btn btn-danger btn-sm">
+                            <i class="bi bi-trash"></i> Delete
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="alert alert-info">No categories found.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

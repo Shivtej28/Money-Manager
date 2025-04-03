@@ -1,0 +1,180 @@
+{% extends 'base.html' %} 
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center text-white">Income & Expense Summary - {{ selected_year }}</h2>
+
+    <!-- Month & Year Selection Form -->
+    <form method="GET" class="d-flex justify-content-center align-items-center gap-2 mb-4">
+        <!-- Custom Dropdown with Checkboxes -->
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="monthDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Select Months
+            </button>
+            <ul class="dropdown-menu p-2" aria-labelledby="monthDropdown">
+                {% for month in months %}
+                <li class="dropdown-item">
+                    <input type="checkbox" class="form-check-input month-checkbox" name="month" value="{{ month }}" 
+                        {% if month in selected_months %}checked{% endif %}>
+                    <label class="form-check-label ms-1">{{ month }}</label>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Year Selection -->
+        <select name="year" class="form-select w-auto">
+            {% for year in available_years %}
+            <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Filter</button>
+    </form>
+    <div class="text-center mb-4">
+        <a href="{% url 'yearly_report' selected_year=selected_year %}" class="btn btn-info">View Yearly Report</a>
+    </div>
+    <!-- Summary Cards -->
+    <div class="row g-3 text-center">
+        <div class="col-md-3">
+            <div class="card shadow-lg bg-light p-3">
+                <h5 class="text-dark">Total Income</h5>
+                <h3 class="text-primary">₹{{ total_income }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-lg bg-danger text-white p-3">
+                <h5>Total Expenses</h5>
+                <h3>₹{{ total_expense }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-lg bg-warning text-dark p-3">
+                <h5>Total Savings</h5>
+                <h3>₹{{ total_saving }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-lg bg-success text-white p-3">
+                <h5>Savings Rate</h5>
+                <h3>{{ savings_rate }}%</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bar Chart -->
+   <!-- Income vs Expense Chart Row -->
+<div class="row mt-5">
+    <div class="col-md-6">
+        <div class="card p-3 shadow chart-card">
+            <h5 class="text-center">INCOME VS. EXPENSE</h5>
+            <canvas id="incomeExpenseChart"></canvas>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card p-3 shadow chart-card">
+            <h5 class="text-uppercase">Expense as % of Income</h5>
+            <canvas id="expenseIncomeChart"></canvas>
+            <h3 class="mt-2">{{ expense_percentage }}%</h3>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4 card p-3 shadow">
+    <h4 class="text-center">Top 20 Expense Sources</h4>
+    <table class="table table-bordered">
+        <thead class="bg-light">
+            <tr>
+                <th>#</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Percentage</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in table_data %}
+            <tr>
+                <td>{{ row.rank }}</td>
+                <td>{{ row.category }}</td>
+                <td>₹ {{ row.amount|floatformat:2 }}</td>
+                <td>{{ row.percentage }}%</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">No data available</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+
+<!-- Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var ctx = document.getElementById('incomeExpenseChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Income', 'Expense'],
+            datasets: [{
+                label: 'Amount (₹)',
+                data: [{{ total_income }}, {{ total_expense }}],
+                backgroundColor: ['#007bff', '#dc3545'],
+                borderRadius: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y', 
+            scales: {
+                x: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    var ctx = document.getElementById('expenseIncomeChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Expense', 'Remaining'],
+            datasets: [{
+                data: [{{ expense_percentage }}, {{ remaining_percentage }}],
+                backgroundColor: ['#dc3545', '#f8f9fa'],
+                borderRadius: 10
+            }]
+        },
+        options: {
+            responsive: false,
+            maintainAspectRatio: false,
+            cutout: '50%',
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // Update dropdown button text based on selection
+    document.addEventListener("DOMContentLoaded", function () {
+        let checkboxes = document.querySelectorAll(".month-checkbox");
+        let dropdownButton = document.getElementById("monthDropdown");
+
+        function updateDropdownText() {
+            let selectedMonths = Array.from(checkboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.nextElementSibling.innerText);
+            
+            dropdownButton.innerText = selectedMonths.length ? selectedMonths.join(", ") : "Select Months";
+        }
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", updateDropdownText);
+        });
+
+        updateDropdownText(); // Initial update
+    });
+</script>
+{% endblock %}

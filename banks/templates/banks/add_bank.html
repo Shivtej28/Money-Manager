@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Add Bank</h2>
+    
+    <div class="card p-4 shadow bg-dark text-light">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="mb-3">
+                {{ form.as_p }}
+            </div>
+            <div class="d-flex justify-content-between">
+                <button class="btn btn-success w-50 me-2" type="submit">
+                    <i class="bi bi-plus-lg"></i> Add Bank
+                </button>
+                <a href="{% url 'banks' %}" class="btn btn-secondary w-50">
+                    <i class="bi bi-x-lg"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
