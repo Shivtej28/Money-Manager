@@ -1,239 +1,180 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
+
 {% block content %}
-    <div class="container">
-        <h1 class="header-title">YEAR {{ year }}</h1>
-        <p class="sub-title">INCOME & EXPENSE SUMMARY</p>
-        <p>Expense Percentage: {{ expense_percentage }}</p>
-        <p>Remaining Percentage: {{ remaining_percentage }}</p>
+<div class="container my-4">
+    <h1 class="text-center fw-bold text-primary">YEARLY REPORT - {{ year }}</h1>
+    <p class="text-center text-muted fs-5">Income & Expense Overview</p>
 
-        <!-- Year Selection Dropdown -->
-        <div class="text-center my-3">
-            <label for="yearSelect" class="fw-bold">Select Year:</label>
-            <select id="yearSelect" class="form-select w-auto d-inline" onchange="changeYear(this.value)">
-                {% for y in available_years %}
-                    <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
-                {% endfor %}
-            </select>
+    <!-- Year Selection Buttons -->
+    <div class="text-center my-3">
+        <label class="fw-bold">Select Year:</label>
+        <div class="btn-group">
+            {% for y in available_years %}
+                <a href="/dashboard/yearly_report/{{ y }}" 
+                   class="btn {% if y == year %} btn-primary {% else %} btn-outline-secondary {% endif %}">
+                    {{ y }}
+                </a>
+            {% endfor %}
         </div>
+    </div>
 
-        <!-- Summary Cards -->
-        <div class="row text-center mt-4">
-            <div class="col-md-4">
-                <div class="card p-3 bg-info text-white">
-                    <h5>TOTAL INCOME</h5>
-                    <h3>₹{{ total_income }}</h3>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-3 bg-danger text-white">
-                    <h5>TOTAL EXPENSES</h5>
-                    <h3>₹{{ total_expense }}</h3>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-3 bg-success text-white">
-                    <h5>NET BALANCE</h5>
-                    <h3>₹{{ net_balance }}</h3>
-                </div>
+    <!-- Summary Cards -->
+    <div class="row text-center mt-4">
+        <div class="col-md-4">
+            <div class="card shadow-lg border-0 p-4 bg-gradient bg-primary text-white">
+                <h5 class="fw-bold">TOTAL INCOME</h5>
+                <h3>₹{{ total_income }}</h3>
             </div>
         </div>
-
-        <!-- Monthly Overview Table -->
-        <div class="card mt-4">
-            <div class="card-header bg-secondary text-white text-center">
-                <h4>MONTHLY OVERVIEW</h4>
-            </div>
-            <div class="card-body">
-                <table class="table table-bordered text-center">
-                    <thead class="bg-light">
-                        <tr>
-                            <th>MONTH</th>
-                            <th>INCOME</th>
-                            <th>EXPENSE</th>
-                            <th>TOTAL</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in monthly_overview %}
-                        <tr>
-                            <td>{{ item.month }}</td>
-                            <td>₹ {{ item.income|floatformat:2 }}</td>
-                            <td>₹ {{ item.expense|floatformat:2 }}</td>
-                            <td {% if item.net_balance < 0 %} class="text-danger" {% endif %}>₹ {{ item.net_balance|floatformat:2 }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot class="bg-light">
-                        <tr>
-                            <th>TOTAL</th>
-                            <th>₹ {{ total_income|floatformat:2 }}</th>
-                            <th>₹ {{ total_expense|floatformat:2 }}</th>
-                            <th>₹ {{ net_balance|floatformat:2 }}</th>
-                        </tr>
-                    </tfoot>
-                </table>
+        <div class="col-md-4">
+            <div class="card shadow-lg border-0 p-4 bg-gradient bg-danger text-white">
+                <h5 class="fw-bold">TOTAL EXPENSES</h5>
+                <h3>₹{{ total_expense }}</h3>
             </div>
         </div>
-
-        <!-- Charts Section -->
-        <div class="row my-4">
-            <div class="col-md-6">
-                <div class="card p-3">
-                    <h5 class="text-center">Expense as % of Income</h5>
-                    <div class="chart-container">
-                        <canvas id="expenseChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card p-3">
-                    <h5 class="text-center">Income vs Expenses</h5>
-                    <div class="chart-container">
-                        <canvas id="incomeVsExpenseChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Category Wise Expense Breakdown -->
-        <div class="row my-4">
-            <div class="col-md-6">
-                <div class="card p-3">
-                    <h5 class="text-center">Expense Breakdown by Category</h5>
-                    <div class="chart-container">
-                        <canvas id="categoryExpenseChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card p-3">
-                    <h5 class="text-center">Monthly Income & Expense</h5>
-                    <canvas id="monthlyIncomeExpenseChart"></canvas>
-                </div>
+        <div class="col-md-4">
+            <div class="card shadow-lg border-0 p-4 bg-gradient bg-success text-white">
+                <h5 class="fw-bold">NET BALANCE</h5>
+                <h3>₹{{ net_balance }}</h3>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Monthly Overview Table -->
+    <div class="card mt-4 shadow-lg border-0">
+        <div class="card-header bg-dark text-white text-center">
+            <h4 class="fw-bold">MONTHLY OVERVIEW</h4>
+        </div>
+        <div class="card-body">
+            <table class="table table-hover text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>MONTH</th>
+                        <th>INCOME</th>
+                        <th>EXPENSE</th>
+                        <th>BALANCE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in monthly_overview %}
+                    <tr>
+                        <td class="fw-bold">{{ item.month }}</td>
+                        <td>₹ {{ item.income|floatformat:2 }}</td>
+                        <td>₹ {{ item.expense|floatformat:2 }}</td>
+                        <td {% if item.net_balance < 0 %} class="text-danger" {% else %} class="text-success" {% endif %}>
+                            ₹ {{ item.net_balance|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-    <!-- Chart.js Scripts -->
-    <script>
-        function changeYear(year) {
-            let currentUrl = window.location.href;
+    <!-- Charts Section -->
+    <div class="row my-4">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 p-3">
+                <h5 class="text-center">Expense as % of Income</h5>
+                <canvas id="expenseChart"></canvas>
+            </div>
+        </div>
 
-            // Check if the current URL already has a year at the end
-            let newUrl = currentUrl.replace(/\/\d{4}$/, `/${year}`);
-        
-            // If the year is not present, append it
-            if (newUrl === currentUrl) {
-                newUrl = `/dashboard/yearly_report/${year}`;
-            }
-        
-            window.location.href = newUrl;
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 p-3">
+                <h5 class="text-center">Income vs Expenses</h5>
+                <canvas id="incomeVsExpenseChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Wise Breakdown -->
+    <div class="row my-4">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 p-3">
+                <h5 class="text-center">Expense Breakdown by Category</h5>
+                <canvas id="categoryExpenseChart"></canvas>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 p-3">
+                <h5 class="text-center">Monthly Income & Expense</h5>
+                <canvas id="monthlyIncomeExpenseChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap & Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Expense Chart
+    new Chart(document.getElementById('expenseChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Expenses', 'Remaining Income'],
+            datasets: [{
+                data: [{{ expense_percentage }}, {{ remaining_percentage }}],
+                backgroundColor: ['#e74c3c', '#2ecc71'],
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    // Income vs Expense Chart
+    new Chart(document.getElementById('incomeVsExpenseChart'), {
+        type: 'bar',
+        data: {
+            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+            datasets: [
+                {
+                    label: 'Income',
+                    data: {{ monthly_income }},
+                    backgroundColor: '#3498db'
+                },
+                {
+                    label: 'Expenses',
+                    data: {{ monthly_expense }},
+                    backgroundColor: '#e74c3c'
+                }
+            ]
         }
+    });
 
-        // Expense Percentage Chart
-        const expenseCtx = document.getElementById('expenseChart').getContext('2d');
-        new Chart(expenseCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Expenses', 'Remaining Income'],
-                datasets: [{
-                    data: [{{ expense_percentage }},{{ remaining_percentage }}],
-                    backgroundColor: ['#dc3545', '#f8f9fa'],
-                }]
-            },
-            options: {
-                responsive: false,
-                maintainAspectRatio: false,
-                cutout: '50%',
-                plugins: {
-                    legend: { display: false }
+    // Category Expense Breakdown Chart
+    new Chart(document.getElementById('categoryExpenseChart'), {
+        type: 'pie',
+        data: {
+            labels: {{ category_labels|safe }},
+            datasets: [{
+                data: {{ category_values|safe }},
+                backgroundColor: ['#ff5733', '#33ff57', '#5733ff', '#ffc300']
+            }]
+        }
+    });
+
+    // Monthly Income & Expense Chart
+    new Chart(document.getElementById("monthlyIncomeExpenseChart"), {
+        type: "bar",
+        data: {
+            labels: [
+                "January", "February", "March", "April", "May", "June", 
+                "July", "August", "September", "October", "November", "December"
+            ],
+            datasets: [
+                { label: "Income", backgroundColor: "#4b6584", data: {{ monthly_income|safe }} },
+                { label: "Expenses", backgroundColor: "#d1a3a3", data: {{ monthly_expense|safe }} },
+                { 
+                    label: "Total", type: "line", borderColor: "#8b0000", 
+                    borderWidth: 2, fill: false, data: {{ monthly_net_total|safe }} 
                 }
-            }
-        });
+            ]
+        },
+        options: { responsive: true }
+    });
+</script>
 
-        // Income vs Expense Chart
-        const incomeVsExpenseCtx = document.getElementById('incomeVsExpenseChart').getContext('2d');
-        new Chart(incomeVsExpenseCtx, {
-            type: 'bar',
-            data: {
-                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-                datasets: [
-                    {
-                        label: 'Income',
-                        data: {{ monthly_income }},
-                        backgroundColor: '#007bff'
-                    },
-                    {
-                        label: 'Expenses',
-                        data: {{ monthly_expense }},
-                        backgroundColor: '#dc3545'
-                    }
-                ]
-            }
-        });
-
-        // Category Expense Breakdown Chart
-        const categoryExpenseCtx = document.getElementById('categoryExpenseChart').getContext('2d');
-        new Chart(categoryExpenseCtx, {
-            type: 'pie',
-            data: {
-                labels: {{ category_labels|safe }},
-                datasets: [{
-                    data: {{ category_values|safe }},
-                    backgroundColor: ['#FF5733', '#33FF57', '#5733FF', '#FFC300', '#DAF7A6', '#FF33A1', '#3385FF']
-                }]
-            }
-        });
-
-        var ctx = document.getElementById("monthlyIncomeExpenseChart").getContext("2d");
-        var monthlyChart = new Chart(ctx, {
-            type: "bar",
-            data: {
-                labels: [
-                    "January", "February", "March", "April", "May", "June", 
-                    "July", "August", "September", "October", "November", "December"
-                ],
-                datasets: [
-                    {
-                        label: "Income",
-                        backgroundColor: "#4b6584",
-                        data: {{ monthly_income|safe }}
-                    },
-                    {
-                        label: "Expenses",
-                        backgroundColor: "#d1a3a3",
-                        data: {{ monthly_expense|safe }}
-                    },
-                    {
-                        label: "Total",
-                        type: "line",
-                        borderColor: "#8b0000",
-                        borderWidth: 2,
-                        fill: false,
-                        data: {{ monthly_net_total|safe }}
-                    }
-                ]
-            },
-            options: {
-                responsive: false,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(value);
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    </script>
 {% endblock %}

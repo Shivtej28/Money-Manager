@@ -1,18 +1,18 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 {% block content %}
 <div class="container mt-4">
-    <h2 class="text-center text-white">Income & Expense Summary - {{ selected_year }}</h2>
+    <h2 class="text-center text-light">Income & Expense Summary - {{ selected_year }}</h2>
 
     <!-- Month & Year Selection Form -->
     <form method="GET" class="d-flex justify-content-center align-items-center gap-2 mb-4">
         <!-- Custom Dropdown with Checkboxes -->
         <div class="dropdown">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="monthDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <button class="btn btn-outline-light dropdown-toggle" type="button" id="monthDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                 Select Months
             </button>
-            <ul class="dropdown-menu p-2" aria-labelledby="monthDropdown">
+            <ul class="dropdown-menu p-2 bg-dark text-light" aria-labelledby="monthDropdown">
                 {% for month in months %}
-                <li class="dropdown-item">
+                <li class="dropdown-item text-light">
                     <input type="checkbox" class="form-check-input month-checkbox" name="month" value="{{ month }}" 
                         {% if month in selected_months %}checked{% endif %}>
                     <label class="form-check-label ms-1">{{ month }}</label>
@@ -22,7 +22,7 @@
         </div>
 
         <!-- Year Selection -->
-        <select name="year" class="form-select w-auto">
+        <select name="year" class="form-select w-auto bg-dark text-light border-light">
             {% for year in available_years %}
             <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
             {% endfor %}
@@ -31,9 +31,11 @@
         <!-- Submit Button -->
         <button type="submit" class="btn btn-primary">Filter</button>
     </form>
+
     <div class="text-center mb-4">
         <a href="{% url 'yearly_report' selected_year=selected_year %}" class="btn btn-info">View Yearly Report</a>
     </div>
+
     <!-- Summary Cards -->
     <div class="row g-3 text-center">
         <div class="col-md-3">
@@ -62,52 +64,52 @@
         </div>
     </div>
 
-    <!-- Bar Chart -->
-   <!-- Income vs Expense Chart Row -->
-<div class="row mt-5">
-    <div class="col-md-6">
-        <div class="card p-3 shadow chart-card">
-            <h5 class="text-center">INCOME VS. EXPENSE</h5>
-            <canvas id="incomeExpenseChart"></canvas>
+    <!-- Charts Row -->
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card p-3 shadow bg-dark text-light">
+                <h5 class="text-center">Income vs. Expense</h5>
+                <canvas id="incomeExpenseChart"></canvas>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card p-3 shadow bg-dark text-light">
+                <h5 class="text-uppercase">Expense as % of Income</h5>
+                <canvas id="expenseIncomeChart"></canvas>
+                <h3 class="mt-2">{{ expense_percentage }}%</h3>
+            </div>
         </div>
     </div>
 
-    <div class="col-md-6">
-        <div class="card p-3 shadow chart-card">
-            <h5 class="text-uppercase">Expense as % of Income</h5>
-            <canvas id="expenseIncomeChart"></canvas>
-            <h3 class="mt-2">{{ expense_percentage }}%</h3>
-        </div>
+    <!-- Expense Table -->
+    <div class="mt-4 card p-3 shadow bg-dark text-light">
+        <h4 class="text-center">Top 20 Expense Sources</h4>
+        <table class="table table-bordered table-dark">
+            <thead class="bg-light text-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in table_data %}
+                <tr>
+                    <td>{{ row.rank }}</td>
+                    <td>{{ row.category }}</td>
+                    <td>₹ {{ row.amount|floatformat:2 }}</td>
+                    <td>{{ row.percentage }}%</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No data available</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
-
-<div class="mt-4 card p-3 shadow">
-    <h4 class="text-center">Top 20 Expense Sources</h4>
-    <table class="table table-bordered">
-        <thead class="bg-light">
-            <tr>
-                <th>#</th>
-                <th>Category</th>
-                <th>Amount</th>
-                <th>Percentage</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in table_data %}
-            <tr>
-                <td>{{ row.rank }}</td>
-                <td>{{ row.category }}</td>
-                <td>₹ {{ row.amount|floatformat:2 }}</td>
-                <td>{{ row.percentage }}%</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4" class="text-center">No data available</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
 </div>
 
 <!-- Chart.js Script -->

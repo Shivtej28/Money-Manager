@@ -1,36 +1,55 @@
 {% extends 'base.html' %}
-
+{% load humanize %}
 {% block content %}
-<h2>My Loans</h2>
-<a href="{% url 'add_loan' %}" class="btn btn-primary">Add Loan</a>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="text-light">My Loans</h2>
+        <a href="{% url 'add_loan' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Add Loan</a>
+    </div>
 
-<table class="table mt-3">
-    <thead>
-        <tr>
-            <th>Loan</th>
-            <th>Principal</th>
-            <th>EMI</th>
-            <th>Remaining Principal</th>
-            <th>Interest Paid</th>
-            <th>Remaining Tenure</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for loan in loans %}
-        <tr>
-            <td><a href="{% url 'loan_detail' loan.id %}">{{ loan.loan_name }}</a></td>
-            <td>₹{{ loan.loan_amount }}</td>
-            <td>₹{{ loan.calculate_emi }}</td>
-            <td>₹{{ loan.remaining_principal }}</td>
-            <td>₹{{ loan.total_interest_paid }}</td>
-            <td>{{ loan.remaining_tenure }} months</td>
-            <td>
-                <a href="{% url 'loan_update' loan.id %}" class="btn btn-warning btn-sm">Edit</a>
-                <a href="{% url 'loan_delete' loan.id %}" class="btn btn-danger btn-sm">Delete</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <div class="table-responsive mt-3">
+        <table class="table table-dark table-striped table-hover text-center">
+            <thead class="table-primary">
+                <tr>
+                    <th>Loan</th>
+                    <th>Principal</th>
+                    <th>EMI</th>
+                    <th>Remaining Principal</th>
+                    <th>Interest Paid</th>
+                    <th>Remaining Tenure</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in loans %}
+                <tr>
+                    <td>
+                        <a href="{% url 'loan_detail' loan.id %}" class="text-light fw-bold">
+                            {{ loan.loan_name }}
+                        </a>
+                    </td>
+                    <td>₹{{ loan.loan_amount|floatformat:2|intcomma }}</td>
+                    <td>₹{{ loan.calculate_emi|floatformat:2|intcomma }}</td>
+                    <td>₹{{ loan.remaining_principal|floatformat:2|intcomma }}</td>
+                    <td>₹{{ loan.total_interest_paid|floatformat:2|intcomma }}</td>
+                    <td>{{ loan.remaining_tenure }} months</td>
+                    <td>
+                        <a href="{% url 'loan_update' loan.id %}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit">Update</i>
+                        </a>
+                        <a href="{% url 'loan_delete' loan.id %}" class="btn btn-danger btn-sm"
+                           onclick="return confirm('Are you sure you want to delete this loan?');">
+                            <i class="fas fa-trash">Delete</i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted">No loans found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}
