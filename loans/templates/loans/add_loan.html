@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if loan %}Update{% else %}Add New{% endif %} Loan</h2>
+
+    <form method="POST" class="mt-3">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="id_loan_name" class="form-label">Loan Name:</label>
+            {{ form.loan_name }}
+        </div>
+        
+        <div class="mb-3">
+            <label for="id_loan_amount" class="form-label">Loan Amount (₹):</label>
+            {{ form.loan_amount }}
+        </div>
+
+        <div class="mb-3">
+            <label for="id_tenure_months" class="form-label">Tenure (Months):</label>
+            {{ form.tenure_months }}
+        </div>
+        
+        <div class="mb-3">
+            <label for="id_start_date" class="form-label">Start Date:</label>
+            {{ form.start_date }}
+        </div>
+
+        <div class="mb-3">
+            <label for="id_category" class="form-label">Select Category (for tracking transactions):</label>
+            {{ form.category }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            {% if loan %}Update{% else %}Add{% endif %} Loan
+        </button>
+
+        <a href="{% url 'loan_list' %}" class="btn btn-secondary">Cancel</a>
+
+        {% if loan %}
+        <a href="{% url 'update_interest_rate' loan.id %}" class="btn btn-warning">Update Interest Rate</a>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

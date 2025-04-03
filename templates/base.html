@@ -172,6 +172,9 @@
         <a href="{% url 'list_categories' %}" class="{% if request.path == '/categories/' %}active{% endif %}">
             <i class="bi bi-tags"></i> Categories
         </a>
+        <a href="{% url 'loan_list' %}" class="{% if request.path == '/loan/' %}active{% endif %}">
+            <i class="bi bi-tags"></i> Loans
+        </a>
         <a href="{% url 'logout' %}">
             <i class="bi bi-box-arrow-right"></i> Logout
         </a>

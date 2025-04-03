@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>My Loans</h2>
+<a href="{% url 'add_loan' %}" class="btn btn-primary">Add Loan</a>
+
+<table class="table mt-3">
+    <thead>
+        <tr>
+            <th>Loan</th>
+            <th>Principal</th>
+            <th>EMI</th>
+            <th>Remaining Principal</th>
+            <th>Interest Paid</th>
+            <th>Remaining Tenure</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for loan in loans %}
+        <tr>
+            <td><a href="{% url 'loan_detail' loan.id %}">{{ loan.loan_name }}</a></td>
+            <td>₹{{ loan.loan_amount }}</td>
+            <td>₹{{ loan.calculate_emi }}</td>
+            <td>₹{{ loan.remaining_principal }}</td>
+            <td>₹{{ loan.total_interest_paid }}</td>
+            <td>{{ loan.remaining_tenure }} months</td>
+            <td>
+                <a href="{% url 'loan_update' loan.id %}" class="btn btn-warning btn-sm">Edit</a>
+                <a href="{% url 'loan_delete' loan.id %}" class="btn btn-danger btn-sm">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
