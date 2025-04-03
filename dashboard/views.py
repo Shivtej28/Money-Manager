@@ -22,6 +22,7 @@ def monthly_expense_report(request):
     transactions = Transaction.objects.filter(
         transaction_date__month__in=selected_months,
         transaction_date__year=selected_year,
+        user=request.user,
     )
 
     # Calculate totals
@@ -53,7 +54,6 @@ def monthly_expense_report(request):
         .annotate(total_spent=Sum("amount"))
         .order_by("-total_spent")[:20]
     )
-    print(category_expenses[0])
 
     # Prepare Data for Table
     table_data = [
@@ -89,7 +89,6 @@ def monthly_expense_report(request):
     return render(request, "dashboard/monthly_expense.html", context)
 
 
-@login_required
 def convert_decimal(value):
     if isinstance(value, Decimal):
         return float(value)
@@ -101,12 +100,15 @@ def convert_decimal(value):
 # Assuming convert_decimal is defined
 
 
+@login_required
 def yearly_report(request, selected_year):
     # Get available years for dropdown
     available_years = Transaction.objects.dates("transaction_date", "year").distinct()
-
+    print(selected_year)
     # Filter transactions for the selected year
-    transactions = Transaction.objects.filter(transaction_date__year=selected_year)
+    transactions = Transaction.objects.filter(
+        transaction_date__year=selected_year, user=request.user
+    )
 
     # Calculate total income, expenses, and net balance
     total_income = (
@@ -156,7 +158,6 @@ def yearly_report(request, selected_year):
             ).aggregate(Sum("amount"))["amount__sum"]
             or 0
         )
-        print(income)
 
         expense = (
             transactions.filter(
@@ -177,7 +178,6 @@ def yearly_report(request, selected_year):
                 "net_balance": convert_decimal(income - expense),
             }
         )
-    print(monthly_overview)
 
     # Category-wise expense breakdown
     categories = (

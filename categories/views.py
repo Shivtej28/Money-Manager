@@ -14,9 +14,11 @@ def list_categories(request):
 
     # Filter categories if a category type is selected
     if category_type:
-        categories = Category.objects.filter(category_type=category_type)
+        categories = Category.objects.filter(
+            category_type=category_type, user=request.user
+        )
     else:
-        categories = Category.objects.all()
+        categories = Category.objects.filter(user=request.user)
 
     return render(
         request,
@@ -31,14 +33,14 @@ def list_categories(request):
 @login_required
 def create_category(request):
     if request.method == "POST":
-        form = CategoryForm(request.POST)
+        form = CategoryForm(request.POST, user=request.user)
         if form.is_valid():
             category = form.save(commit=False)
             category.user = request.user
             category.save()
             return redirect("list_categories")
     else:
-        form = CategoryForm()
+        form = CategoryForm(user=request.user)
 
     return render(request, "categories/create_category.html", {"form": form})
 
@@ -58,10 +60,9 @@ def delete_category(request, category_id):
 @login_required
 def update_category(request, category_id):
     category = Category.objects.get(id=category_id)
-    form = CategoryForm(instance=category)
+    form = CategoryForm(instance=category, user=request.user)
     if request.method == "POST":
-        print("In IF bblock")
-        form = CategoryForm(request.POST, instance=category)
+        form = CategoryForm(request.POST, instance=category, user=request.user)
         if form.is_valid():
             form.save()
             return redirect("list_categories")

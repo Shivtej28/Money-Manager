@@ -123,7 +123,17 @@
     <!-- Chart.js Scripts -->
     <script>
         function changeYear(year) {
-            window.location.href = `?year=${year}`;
+            let currentUrl = window.location.href;
+
+            // Check if the current URL already has a year at the end
+            let newUrl = currentUrl.replace(/\/\d{4}$/, `/${year}`);
+        
+            // If the year is not present, append it
+            if (newUrl === currentUrl) {
+                newUrl = `/dashboard/yearly_report/${year}`;
+            }
+        
+            window.location.href = newUrl;
         }
 
         // Expense Percentage Chart

@@ -16,5 +16,10 @@ class CategoryForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        self.fields["parent"].queryset = Category.objects.filter(parent__isnull=True)
+        print(user)
+        if user is not None:
+            self.fields["parent"].queryset = Category.objects.filter(
+                parent__isnull=True, user=user
+            )
