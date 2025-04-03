@@ -8,4 +8,9 @@ urlpatterns = [
         yearly_report,
         name="yearly_report",
     ),
+    path(
+        "dashboard/yearly_report/",
+        yearly_report,
+        name="yearly_report",
+    ),
 ]

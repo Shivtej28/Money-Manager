@@ -4,34 +4,15 @@
     <h2 class="text-center text-light">Income & Expense Summary - {{ selected_year }}</h2>
 
     <!-- Month & Year Selection Form -->
-    <form method="GET" class="d-flex justify-content-center align-items-center gap-2 mb-4">
-        <!-- Custom Dropdown with Checkboxes -->
-        <div class="dropdown">
-            <button class="btn btn-outline-light dropdown-toggle" type="button" id="monthDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Select Months
-            </button>
-            <ul class="dropdown-menu p-2 bg-dark text-light" aria-labelledby="monthDropdown">
-                {% for month in months %}
-                <li class="dropdown-item text-light">
-                    <input type="checkbox" class="form-check-input month-checkbox" name="month" value="{{ month }}" 
-                        {% if month in selected_months %}checked{% endif %}>
-                    <label class="form-check-label ms-1">{{ month }}</label>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
+    <form method="GET" action="{% url 'dashboard' %}" class="d-flex justify-content-center align-items-center mb-4">
+        <label for="start_date" class="me-2">Start Date:</label>
+        <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="form-control w-auto me-3" required>
 
-        <!-- Year Selection -->
-        <select name="year" class="form-select w-auto bg-dark text-light border-light">
-            {% for year in available_years %}
-            <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
-            {% endfor %}
-        </select>
+        <label for="end_date" class="me-2">End Date:</label>
+        <input type="date" id="end_date" name="end_date" value="{{ end_date }}" class="form-control w-auto me-3" required>
 
-        <!-- Submit Button -->
-        <button type="submit" class="btn btn-primary">Filter</button>
+        <button type="submit" class="btn btn-primary">Generate Report</button>
     </form>
-
     <div class="text-center mb-4">
         <a href="{% url 'yearly_report' selected_year=selected_year %}" class="btn btn-info">View Yearly Report</a>
     </div>

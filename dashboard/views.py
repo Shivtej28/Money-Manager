@@ -2,7 +2,8 @@ from decimal import Decimal
 
 from django.shortcuts import render
 from django.db.models import Sum
-from datetime import date
+from datetime import date, timedelta, datetime
+
 from transactions.models import Transaction
 from django.contrib.auth.decorators import login_required
 
@@ -11,17 +12,23 @@ from django.contrib.auth.decorators import login_required
 def monthly_expense_report(request):
     # Get the current month & year
     today = date.today()
-    selected_months = request.GET.getlist("month")  # Get multiple selected months
-    selected_year = int(request.GET.get("year", today.year))  # Ensure it's an integer
 
+    start_date = request.GET.get("start_date")  # Get multiple selected months
+    end_date = request.GET.get("end_date")
+
+    if not start_date or not end_date:
+        start_date = (today - timedelta(days=30)).strftime("%Y-%m-%d")  # 30 days ago
+        end_date = today.strftime("%Y-%m-%d")  # Today
+
+    start_date = datetime.strptime(str(start_date), "%Y-%m-%d").date()
+    end_date = datetime.strptime(str(end_date), "%Y-%m-%d").date()
     # Default to the current month if none selected
-    if not selected_months:
-        selected_months = [str(today.month)]
-
+    # if not start_date or end_date:
+    #     start_date = today
+    #     end_date = today - timedelta(30)
     # Filter transactions for selected months and year
     transactions = Transaction.objects.filter(
-        transaction_date__month__in=selected_months,
-        transaction_date__year=selected_year,
+        transaction_date__range=[start_date, end_date],
         user=request.user,
     )
 
@@ -72,8 +79,8 @@ def monthly_expense_report(request):
 
     # Context for the template
     context = {
-        "selected_months": selected_months,
-        "selected_year": selected_year,
+        # "selected_months": selected_months,
+        "selected_year": current_year,
         "total_income": total_income,
         "total_expense": total_expense,
         "total_saving": total_saving,
@@ -101,7 +108,9 @@ def convert_decimal(value):
 
 
 @login_required
-def yearly_report(request, selected_year):
+def yearly_report(request, selected_year=None):
+    if not selected_year:
+        selected_year = datetime.today().year
     # Get available years for dropdown
     available_years = Transaction.objects.dates("transaction_date", "year").distinct()
     print(selected_year)
