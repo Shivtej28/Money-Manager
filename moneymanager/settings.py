@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-cxa^3i0$7%0fzdawaty37ls&&95dq(zz*%1f1wrw2fwc$1ka$6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["money-manager-fzx6.onrender.com", "localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -121,8 +121,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/login/"

@@ -1,10 +1,13 @@
 from decimal import Decimal
+
 from django.shortcuts import render
 from django.db.models import Sum
 from datetime import date
 from transactions.models import Transaction
+from django.contrib.auth.decorators import login_required
 
 
+@login_required
 def monthly_expense_report(request):
     # Get the current month & year
     today = date.today()
@@ -86,6 +89,7 @@ def monthly_expense_report(request):
     return render(request, "dashboard/monthly_expense.html", context)
 
 
+@login_required
 def convert_decimal(value):
     if isinstance(value, Decimal):
         return float(value)
