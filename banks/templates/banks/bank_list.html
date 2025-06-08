@@ -4,10 +4,14 @@
    <h2 class="text-light">Bank Accounts</h2>
 
    <!-- Add Bank Button -->
-   <a class="btn btn-primary mb-3" href="{% url 'add_bank' %}">
-       <i class="bi bi-plus-lg"></i> Add Bank
-   </a>
-
+   <div class="d-flex justify-content-between align-items-center mb-4">
+    <a class="btn btn-primary" href="{% url 'add_bank' %}">
+        <i class="bi bi-plus-lg"></i> Add Bank
+    </a>
+    <div class="bg-success text-white px-4 py-2 rounded shadow-sm" style="font-size: 1.2rem;">
+        <strong>Total Balance:</strong> ₹{{ total_balance|floatformat:2 }}
+    </div>
+</div>
    <!-- Bank List -->
    {% if banks %}
    <div class="table-responsive">

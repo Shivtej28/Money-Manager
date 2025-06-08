@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 CATEGORY_TYPES = [
     ("income", "Income"),
     ("expense", "Expense"),
+    ("savings", "Savings"),
+    ("refund", "Refunds"),
 ]
 
 

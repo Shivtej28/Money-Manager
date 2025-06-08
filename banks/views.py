@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 from .models import Banks
 from .forms import BankForm
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
 
 # Create your views here.
 
@@ -10,7 +11,14 @@ from django.contrib.auth.decorators import login_required
 @login_required
 def bank_list(request):
     banks = Banks.objects.filter(user=request.user)
-    return render(request, "banks/bank_list.html", {"banks": banks})
+    total_balance = (
+        banks.aggregate(total_balance_sum=Sum("balance"))["total_balance_sum"] or 0
+    )
+    return render(
+        request,
+        "banks/bank_list.html",
+        {"banks": banks, "total_balance": total_balance},
+    )
 
 
 @login_required

@@ -1,38 +1,31 @@
 from decimal import Decimal
-
 from django.shortcuts import render
 from django.db.models import Sum
 from datetime import date, timedelta, datetime
-
 from transactions.models import Transaction
 from django.contrib.auth.decorators import login_required
 
 
 @login_required
 def monthly_expense_report(request):
-    # Get the current month & year
     today = date.today()
 
-    start_date = request.GET.get("start_date")  # Get multiple selected months
+    start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
 
     if not start_date or not end_date:
-        start_date = (today - timedelta(days=30)).strftime("%Y-%m-%d")  # 30 days ago
-        end_date = today.strftime("%Y-%m-%d")  # Today
+        start_date = (today - timedelta(days=30)).strftime("%Y-%m-%d")
+        end_date = today.strftime("%Y-%m-%d")
 
     start_date = datetime.strptime(str(start_date), "%Y-%m-%d").date()
     end_date = datetime.strptime(str(end_date), "%Y-%m-%d").date()
-    # Default to the current month if none selected
-    # if not start_date or end_date:
-    #     start_date = today
-    #     end_date = today - timedelta(30)
-    # Filter transactions for selected months and year
+
     transactions = Transaction.objects.filter(
         transaction_date__range=[start_date, end_date],
         user=request.user,
     )
 
-    # Calculate totals
+    # Totals
     total_income = (
         transactions.filter(subcategory__category_type="income").aggregate(
             Sum("amount")
@@ -45,13 +38,26 @@ def monthly_expense_report(request):
         )["amount__sum"]
         or 0
     )
-    total_saving = total_income - total_expense
+    total_refund = (
+        transactions.filter(subcategory__category_type="refund").aggregate(
+            Sum("amount")
+        )["amount__sum"]
+        or 0
+    )
 
-    # Calculate percentages
+    total_income = round(total_income, 2)
+    total_expense = round(total_expense, 2)
+    total_refund = round(total_refund, 2)
+
+    adjusted_expense = round(total_expense - total_refund, 2)
+    total_saving = round(total_income - adjusted_expense, 2)
+
     savings_rate = (total_saving / total_income * 100) if total_income > 0 else 0
-    expense_percentage = (total_expense / total_income * 100) if total_income > 0 else 0
+    expense_percentage = (
+        (adjusted_expense / total_income * 100) if total_income > 0 else 0
+    )
     remaining_percentage = 100 - expense_percentage
-    # Available years (Last 5 years)
+
     current_year = today.year
     available_years = list(range(current_year - 5, current_year + 1))
 
@@ -62,12 +68,11 @@ def monthly_expense_report(request):
         .order_by("-total_spent")[:20]
     )
 
-    # Prepare Data for Table
     table_data = [
         {
             "rank": i + 1,
             "category": entry["category__name"],
-            "amount": entry["total_spent"],
+            "amount": round(entry["total_spent"], 2),
             "percentage": (
                 round((entry["total_spent"] / total_expense * 100), 2)
                 if total_expense
@@ -77,19 +82,18 @@ def monthly_expense_report(request):
         for i, entry in enumerate(category_expenses)
     ]
 
-    # Context for the template
     context = {
-        # "selected_months": selected_months,
         "selected_year": current_year,
         "total_income": total_income,
-        "total_expense": total_expense,
+        "total_expense": adjusted_expense,
+        "total_refund": total_refund,
         "total_saving": total_saving,
         "savings_rate": round(savings_rate, 2),
-        "expense_percentage": round(expense_percentage, 2),  # Added for the report
+        "expense_percentage": round(expense_percentage, 2),
         "transactions": transactions,
-        "months": [str(m) for m in range(1, 13)],  # Months as list of strings
+        "months": [str(m) for m in range(1, 13)],
         "available_years": available_years,
-        "remaining_percentage": remaining_percentage,
+        "remaining_percentage": round(remaining_percentage, 2),
         "table_data": table_data,
     }
 
@@ -98,28 +102,23 @@ def monthly_expense_report(request):
 
 def convert_decimal(value):
     if isinstance(value, Decimal):
-        return float(value)
-    if isinstance(value, list):  # Handle lists with Decimal values
+        return round(float(value), 2)
+    if isinstance(value, list):
         return [convert_decimal(v) for v in value]
     return value
-
-
-# Assuming convert_decimal is defined
 
 
 @login_required
 def yearly_report(request, selected_year=None):
     if not selected_year:
         selected_year = datetime.today().year
-    # Get available years for dropdown
+
     available_years = Transaction.objects.dates("transaction_date", "year").distinct()
-    print(selected_year)
-    # Filter transactions for the selected year
+
     transactions = Transaction.objects.filter(
         transaction_date__year=selected_year, user=request.user
     )
 
-    # Calculate total income, expenses, and net balance
     total_income = (
         transactions.filter(subcategory__category_type="income").aggregate(
             Sum("amount")
@@ -132,14 +131,19 @@ def yearly_report(request, selected_year=None):
         )["amount__sum"]
         or 0
     )
-    net_balance = total_income - total_expense
-
-    # Calculate expense percentage
-    expense_percentage = (
-        round((total_expense / total_income) * 100, 2) if total_income else 0
+    total_refund = (
+        transactions.filter(subcategory__category_type="refund").aggregate(
+            Sum("amount")
+        )["amount__sum"]
+        or 0
     )
 
-    # Monthly breakdown
+    adjusted_expense = round(total_expense - total_refund, 2)
+    net_balance = round(total_income - adjusted_expense, 2)
+    expense_percentage = (
+        round((adjusted_expense / total_income) * 100, 2) if total_income else 0
+    )
+
     monthly_income = []
     monthly_expense = []
     monthly_overview = []
@@ -174,21 +178,30 @@ def yearly_report(request, selected_year=None):
             ).aggregate(Sum("amount"))["amount__sum"]
             or 0
         )
-        net_total = income - expense
+
+        refund = (
+            transactions.filter(
+                transaction_date__month=i, subcategory__category_type="refund"
+            ).aggregate(Sum("amount"))["amount__sum"]
+            or 0
+        )
+
+        adjusted = expense - refund
+        net_total = income - adjusted
 
         monthly_income.append(income)
-        monthly_expense.append(expense)
+        monthly_expense.append(adjusted)
         monthly_net_total.append(net_total)
+
         monthly_overview.append(
             {
                 "month": month,
                 "income": convert_decimal(income),
-                "expense": convert_decimal(expense),
-                "net_balance": convert_decimal(income - expense),
+                "expense": convert_decimal(adjusted),
+                "net_balance": convert_decimal(net_total),
             }
         )
 
-    # Category-wise expense breakdown
     categories = (
         transactions.filter(subcategory__category_type="expense")
         .values("category__name")
@@ -197,12 +210,12 @@ def yearly_report(request, selected_year=None):
     category_labels = [c["category__name"] for c in categories]
     category_values = [c["total"] for c in categories]
 
-    # Context for template
     context = {
         "year": selected_year,
         "available_years": [y.year for y in available_years],
         "total_income": convert_decimal(total_income),
-        "total_expense": convert_decimal(total_expense),
+        "total_expense": convert_decimal(adjusted_expense),
+        "total_refund": convert_decimal(total_refund),
         "net_balance": convert_decimal(net_balance),
         "expense_percentage": convert_decimal(expense_percentage),
         "monthly_income": convert_decimal(monthly_income),
@@ -210,7 +223,7 @@ def yearly_report(request, selected_year=None):
         "category_labels": category_labels,
         "category_values": convert_decimal(category_values),
         "remaining_percentage": convert_decimal(100 - expense_percentage),
-        "monthly_overview": monthly_overview,  # Added for table
+        "monthly_overview": monthly_overview,
         "monthly_net_total": convert_decimal(monthly_net_total),
     }
 

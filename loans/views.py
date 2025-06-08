@@ -16,12 +16,14 @@ def loan_list(request):
 def add_loan(request):
     """Add a new loan with initial interest rate."""
     if request.method == "POST":
+        print("-------------------")
         form = LoanForm(request.POST)
+        print(form.errors)
         if form.is_valid():
             loan = form.save(commit=False)
             loan.user = request.user
             loan.save()
-
+            print("Saved------------")
             # Add initial interest rate entry
             InterestRateHistory.objects.create(
                 loan=loan, interest_rate=loan.interest_rate, start_date=loan.start_date
@@ -119,8 +121,12 @@ def update_interest_rate(request, loan_id):
         if form.is_valid():
             interest_rate_history = form.save(commit=False)
             interest_rate_history.loan = loan
-            interest_rate_history.start_date = date.today()  # Ensure it's set correctly
+            interest_rate_history.start_date = date.today()
+            loan.interest_rate = (
+                interest_rate_history.interest_rate
+            )  # Ensure it's set correctly
             interest_rate_history.save()
+            loan.save(update_fields=["interest_rate"])
             return redirect("loan_detail", loan_id=loan.id)
     else:
         form = InterestRateUpdateForm()

@@ -115,7 +115,7 @@ class InterestRateHistory(models.Model):
     interest_rate = models.DecimalField(
         max_digits=5, decimal_places=2, help_text="Annual interest rate in %"
     )
-    start_date = models.DateField()
+    start_date = models.DateField(default=date.today)
 
     class Meta:
         ordering = ["-start_date"]  # Show the latest interest rate first

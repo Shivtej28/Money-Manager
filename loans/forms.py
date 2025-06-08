@@ -14,10 +14,10 @@ class LoanForm(forms.ModelForm):
             "tenure_months",
             "category",
             "start_date",
-            "status",
         ]
         widgets = {
             "start_date": forms.DateInput(attrs={"type": "date"}),
+            "category": forms.Select(attrs={"class": "form-control"}),
         }
 
 
@@ -27,3 +27,6 @@ class InterestRateUpdateForm(forms.ModelForm):
     class Meta:
         model = InterestRateHistory
         fields = ["interest_rate", "start_date"]
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+        }
