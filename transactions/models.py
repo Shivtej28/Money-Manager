@@ -1,12 +1,7 @@
-from operator import mod
-from unicodedata import category
 from django.db import models
 from django.contrib.auth.models import User
-
 from categories.models import Category
 from banks.models import Banks
-
-# Create your models here.
 
 
 class Transaction(models.Model):
@@ -29,65 +24,74 @@ class Transaction(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     def is_bank_transfer(self):
-        print("Jreufukejwj", self.subcategory.name)
-        return self.subcategory.category_type == "savings"
+        return self.subcategory and self.subcategory.category_type == "savings"
 
     def get_saving_bank(self):
         return Banks.objects.filter(user=self.user, account_type="savings").first()
 
     def save(self, *args, **kwargs):
         """Update bank balance when a transaction is added or updated."""
-        print("Helloooooooooooooooooooooooo")
         if self.pk:  # If updating an existing transaction
             old_transaction = Transaction.objects.get(pk=self.pk)
+            old_subcat = old_transaction.subcategory
 
-            # Reverse the effect of old transaction
-            if old_transaction.subcategory.category_type == "expense":
-                old_transaction.bank.balance += (
-                    old_transaction.amount
-                )  # Refund old expense
-            elif old_transaction.subcategory.category_type == "income":
-                old_transaction.bank.balance -= old_transaction.amount
-            elif old_transaction.subcategory.category_type == "refund":
-                old_transaction.bank.balance -= old_transaction.amount
+            if old_subcat:
+                if old_subcat.category_type == "expense":
+                    old_transaction.bank.balance += old_transaction.amount
+                elif old_subcat.category_type == "income":
+                    old_transaction.bank.balance -= old_transaction.amount
+                elif old_subcat.category_type == "refund":
+                    old_transaction.bank.balance -= old_transaction.amount
+                elif old_subcat.category_type == "savings":
+                    old_saving_bank = old_transaction.get_saving_bank()
+                    if old_saving_bank:
+                        old_saving_bank.balance -= old_transaction.amount
+                        old_transaction.bank.balance += old_transaction.amount
+                        old_saving_bank.save()
 
             old_transaction.bank.save()
 
-        is_bankTransfer = self.is_bank_transfer()
-        print(is_bankTransfer)
-        if is_bankTransfer:
-            print(self.amount, "----------------------")
-            saving_bank = self.get_saving_bank()
-            print("Saving Bank", saving_bank)
-            saving_bank.balance += self.amount
-            self.bank.balance -= self.amount
-            saving_bank.save()
+        if self.subcategory:
+            if self.subcategory.category_type == "savings":
+                saving_bank = self.get_saving_bank()
+                if saving_bank:
+                    saving_bank.balance += self.amount
+                    self.bank.balance -= self.amount
+                    saving_bank.save()
 
-        # Apply new transaction
-        if self.subcategory.category_type == "expense":
-            self.bank.balance -= self.amount
-        elif self.subcategory.category_type == "income":
-            self.bank.balance += self.amount
-        elif self.subcategory.category_type == "refund":
-            self.bank.balance += self.amount  # refund adds money back
+            if self.subcategory.category_type == "expense":
+                self.bank.balance -= self.amount
+            elif self.subcategory.category_type == "income":
+                self.bank.balance += self.amount
+            elif self.subcategory.category_type == "refund":
+                self.bank.balance += self.amount
 
-        self.category = self.subcategory.parent
+            if self.subcategory.parent:
+                self.category = self.subcategory.parent
 
         self.bank.save()
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        """Revert balance when deleting a transaction"""
-        if self.subcategory.category_type == "expense":
-            self.bank.balance += self.amount  # Refund money for expense
-        elif self.subcategory.category_type == "income":
-            self.bank.balance -= self.amount  # Deduct for income
-        elif self.subcategory.category_type == "refund":
-            self.bank.balance -= (
-                self.amount
-            )  # Deduct refund since it was previously added
+        """Revert balances when deleting a transaction"""
+        subcat = self.subcategory
 
-        self.bank.save()
+        if subcat:
+            if subcat.category_type == "expense":
+                self.bank.balance += self.amount
+            elif subcat.category_type == "income":
+                self.bank.balance -= self.amount
+            elif subcat.category_type == "refund":
+                self.bank.balance -= self.amount
+            elif subcat.category_type == "savings":
+                saving_bank = self.get_saving_bank()
+                if saving_bank:
+                    saving_bank.balance -= self.amount
+                    self.bank.balance += self.amount
+                    saving_bank.save()
+
+            self.bank.save()
+
         super().delete(*args, **kwargs)
 
     def __str__(self):
